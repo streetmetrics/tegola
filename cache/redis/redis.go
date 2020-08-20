@@ -28,19 +28,12 @@ func init() {
 func New(config dict.Dicter) (rcache cache.Interface, err error) {
 
 	// default values
-	defaultNetwork := "tcp"
 	defaultAddress := "127.0.0.1:6379"
 	defaultPassword := ""
-	defaultDB := 0
 	defaultMaxZoom := uint(tegola.MaxZ)
 	defaultTTL := 0
 
 	c := config
-
-	network, err := c.String(ConfigKeyNetwork, &defaultNetwork)
-	if err != nil {
-		return nil, err
-	}
 
 	addr, err := c.String(ConfigKeyAddress, &defaultAddress)
 	if err != nil {
@@ -52,16 +45,9 @@ func New(config dict.Dicter) (rcache cache.Interface, err error) {
 		return nil, err
 	}
 
-	db, err := c.Int(ConfigKeyDB, &defaultDB)
-	if err != nil {
-		return nil, err
-	}
-
-	client := redis.NewClient(&redis.Options{
-		Network:     network,
-		Addr:        addr,
+	client := redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs:       []string{addr},
 		Password:    password,
-		DB:          db,
 		PoolSize:    2,
 		DialTimeout: 3 * time.Second,
 	})
@@ -93,7 +79,7 @@ func New(config dict.Dicter) (rcache cache.Interface, err error) {
 }
 
 type RedisCache struct {
-	Redis      *redis.Client
+	Redis      *redis.ClusterClient
 	Expiration time.Duration
 	MaxZoom    uint
 }
